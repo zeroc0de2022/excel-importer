@@ -3,9 +3,13 @@
 namespace App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use App\Http\Middleware\BasicAuth;
 
 class Kernel extends HttpKernel
 {
+    protected $routeMiddleware = [
+        'basicauth' => BasicAuth::class,
+    ];
     /**
      * The application's global HTTP middleware stack.
      *

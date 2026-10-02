@@ -1,0 +1,12 @@
+7738 - name must contain only English letters and spaces
+10024 - date must be a valid date in d.m.Y format
+23636 - id must be an unsigned big integer
+34119 - name must contain only English letters and spaces
+34127 - name must contain only English letters and spaces
+37756 - id must be an unsigned big integer
+39109 - date must be a valid date in d.m.Y format
+42361 - duplicate id 5475795 (first seen in row 5655)
+46083 - name must contain only English letters and spaces
+46161 - date must be a valid date in d.m.Y format
+49317 - date must be a valid date in d.m.Y format
+59986 - date must be a valid date in d.m.Y format

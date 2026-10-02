@@ -1,19 +1,16 @@
 <?php
 
-use Illuminate\Http\Request;
+declare(strict_types=1);
+
+use App\Http\Controllers\ImportController;
+use App\Http\Controllers\RowController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
+Route::middleware('basicauth')->group(function () {
+    Route::get('/imports', [ImportController::class, 'index'])->name('imports.index');
+    Route::post('/imports', [ImportController::class, 'store'])->middleware('throttle:uploads')->name('imports.store');
+    Route::get('/imports/{import}', [ImportController::class, 'show'])->name('imports.show');
+    Route::get('/imports/{import}/report', [ImportController::class, 'report'])->name('imports.report');
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+    Route::get('/rows', [RowController::class, 'index'])->name('rows.index');
 });

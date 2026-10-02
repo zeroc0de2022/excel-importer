@@ -1,0 +1,97 @@
+# Production stack. Runs behind an edge proxy that terminates TLS and forwards to port 80.
+# Usage: docker compose -f compose.prod.yaml up -d   (see docs/deploy.md)
+name: excel-importer
+
+x-app: &app
+  build:
+    context: .
+    target: prod
+  image: excel-importer:prod
+  env_file: .env
+  volumes:
+    - storage:/var/www/html/storage
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  app:
+    <<: *app
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  queue:
+    <<: *app
+    command: php artisan queue:work redis --sleep=1 --max-jobs=1000 --max-time=3600 --memory=256
+    stop_grace_period: 60s
+
+  scheduler:
+    <<: *app
+    command: php artisan schedule:work
+
+  reverb:
+    <<: *app
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 8080) ? 0 : 1);"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  nginx:
+    build:
+      context: .
+      target: web
+    image: excel-importer-web:prod
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+      reverb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/up"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  # Postgres and Redis publish no ports: only the containers on this network can reach them
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  storage:
+  pgdata:
+  redisdata:

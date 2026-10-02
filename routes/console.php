@@ -1,19 +1,10 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+declare(strict_types=1);
 
-/*
-|--------------------------------------------------------------------------
-| Console Routes
-|--------------------------------------------------------------------------
-|
-| This file is where you may define all of your Closure based console
-| commands. Each Closure is bound to a command instance allowing a
-| simple approach to interacting with each command's IO methods.
-|
-*/
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+// Nightly cleanup: old imports and their files, finished batch records, old failed jobs
+Schedule::command('imports:prune')->dailyAt('03:00');
+Schedule::command('queue:prune-batches --hours=48')->dailyAt('03:10');
+Schedule::command('queue:prune-failed --hours=168')->dailyAt('03:20');

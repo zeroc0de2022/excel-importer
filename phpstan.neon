@@ -1,0 +1,12 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    # Level 8 = full type checks incl. nullability. Levels 9-10 mostly add "mixed" noise
+    # from config() and Redis replies, which would need casts everywhere for no real gain.
+    level: 8
+    paths:
+        - app
+        - database
+        - routes
+        - tests
